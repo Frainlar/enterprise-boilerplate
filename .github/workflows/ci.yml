@@ -1,0 +1,118 @@
+name: CodeGenie CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly security scans every Monday at 00:00 UTC
+
+jobs:
+  build-test-deploy:
+    name: Build, Test & Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # ========== Setup Phase ==========
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    # ========== Cache Optimization ==========
+    - name: Cache pnpm Store
+      uses: actions/cache@v3
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Cache Project Dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          node_modules
+          .turbo
+          apps/frontend/.next/cache
+        key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', '**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-turbo-
+
+    # ========== Installation Phase ==========
+    - name: Install pnpm
+      run: npm install -g pnpm@8
+
+    - name: Install Frontend Dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Install Backend Dependencies
+      run: |
+        cd apps/backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pip-audit safety
+
+    # ========== Build & Test Phase ==========
+    - name: Build with Turbo
+      run: pnpm turbo run build
+
+    - name: Run Frontend Tests
+      run: pnpm turbo run test:frontend
+
+    - name: Run Backend Tests
+      run: |
+        cd apps/backend
+        pytest tests/ -v --cov=app --cov-report=xml
+
+    - name: Lint Codebase
+      run: pnpm turbo run lint
+
+    # ========== Security Phase ==========
+    - name: Run Security Audits
+      if: github.event_name == 'schedule'
+      run: |
+        pnpm audit --prod --audit-level=moderate
+        cd apps/backend
+        pip-audit --require-hashes -r requirements.txt
+        safety check --full-report
+
+    # ========== Deployment Phase ==========
+    - name: Deploy to AWS
+      if: github.ref == 'refs/heads/main' && success()
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        
+    - name: Deploy Frontend
+      if: github.ref == 'refs/heads/main' && success()
+      run: |
+        cd apps/frontend
+        pnpm run deploy:aws  # Replace with your actual deployment command
+
+    - name: Deploy Backend
+      if: github.ref == 'refs/heads/main' && success()
+      run: |
+        cd apps/backend
+        sls deploy --stage prod  # Example for Serverless Framework

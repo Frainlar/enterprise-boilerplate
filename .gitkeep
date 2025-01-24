@@ -1,0 +1,2 @@
+# For shared directories needing tracking
+touch packages/config/src/.gitkeep

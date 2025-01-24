@@ -1,0 +1,23 @@
+{
+  "name": "enterprise boilerplate",
+  "version": "1.0.0",
+  "packageManager": "pnpm@8.15.3",
+  "description": "",
+  "main": "index.js",
+ "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "start:frontend": "cd apps/frontend && next dev",
+    "start:backend": "cd apps/backend && uvicorn main:app --reload"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "turbo": "^2.3.4"
+  },
+  "dependencies": {
+    "config": "workspace:^"
+  }
+}

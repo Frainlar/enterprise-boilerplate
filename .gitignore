@@ -1,0 +1,54 @@
+# Monorepo Root
+/.turbo
+node_modules/
+dist/
+.cache
+.env*
+!.env.example
+*.log
+.DS_Store
+.idea/
+.vscode/
+
+# Frontend (Next.js)
+apps/frontend/.next
+apps/frontend/next-env.d.ts
+apps/frontend/out
+
+# Backend (Python)
+**/__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov/
+.venv
+venv/
+
+# Turborepo
+.turbo
+
+# Environment Files
+.env.local
+.env.development
+.env.production
+.env.test
+
+# OS Files
+Thumbs.db
+ehthumbs.db
+
+# Testing
+/junit.xml
+/coverage
+
+# Editor
+*.swp
+*.swo
+
+# Exclude security reports
+**/security-report.html
+
+# Docker
+docker-compose.override.yml
+**/Dockerfile.dev

@@ -1,0 +1,19 @@
+# Core Settings
+* text=auto eol=lf
+
+# Language Specific
+*.js linguist-language=TypeScript
+*.ts linguist-language=TypeScript
+*.py linguist-language=Python
+
+# Lockfiles (Prevent merge conflicts)
+package-lock.json binary
+yarn.lock binary
+pnpm-lock.yaml text eol=lf
+
+# Merge Strategies
+*.json merge=union
+*.md merge=union
+turbo.json merge=ours
+
+*.zip filter=lfs diff=lfs merge=lfs -text
