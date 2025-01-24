@@ -1,0 +1,7 @@
+{
+    "postCreateCommand": "mkdir -p ~/.pnpm/bin && pnpm config set global-bin-dir ~/.pnpm/bin",
+    "remoteEnv": {
+      "PNPM_HOME": "${containerEnv:HOME}/.pnpm/bin",
+      "PATH": "${containerEnv:PNPM_HOME}:${containerEnv:PATH}"
+    }
+  }
